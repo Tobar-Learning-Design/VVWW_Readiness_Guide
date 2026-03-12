@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cathole Drill — LNT Principle 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --earth:        #090e08;
+  --earth-mid:    #111a0f;
+  --earth-card:   #141f12;
+  --earth-border: #1e3018;
+  --amber:        #D49020;
+  --amber-light:  #E8A830;
+  --amber-dim:    rgba(212,144,32,0.11);
+  --amber-glow:   rgba(212,144,32,0.48);
+  --sage:         #5A9058;
+  --sage-dim:     rgba(90,144,88,0.12);
+  --terra:        #C4432A;
+  --terra-dim:    rgba(196,67,42,0.12);
+  --bone:         #DDD5C2;
+  --dust:         #6E7E62;
+  --font-disp:    'Barlow Condensed', 'Impact', Arial Narrow, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+}
+
+body {
+  font-family: var(--font-disp);
+  background-color: var(--earth);
+  color: var(--bone);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 39px, rgba(48,72,36,0.13) 39px, rgba(48,72,36,0.13) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(48,72,36,0.07) 39px, rgba(48,72,36,0.07) 40px);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: 0.038;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  width: 100%; max-width: 640px;
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
+
+/* ── Header ── */
+header {
+  position: relative;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--earth-border);
+  overflow: hidden; flex-shrink: 0;
+}
+.hdr-bg-num {
+  position: absolute; right: 6px; top: -16px;
+  font-family: var(--font-disp);
+  font-size: 9rem; font-weight: 800; line-height: 1;
+  color: var(--amber); opacity: 0.042;
+  letter-spacing: -0.04em;
+  user-select: none; pointer-events: none;
+}
+header::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.009) 3px, rgba(255,255,255,0.009) 4px);
+  pointer-events: none;
+}
+.hdr-inner { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; position: relative; z-index: 2; }
+.hdr-eyebrow { font-family: var(--font-mono); font-size: 0.54rem; color: var(--amber); letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 2px; }
+header h1 { font-family: var(--font-disp); font-size: 2rem; font-weight: 800; line-height: 0.92; letter-spacing: 0.02em; text-transform: uppercase; color: var(--bone); }
+header h1 span { color: var(--amber); display: block; }
+.hdr-rule { height: 1.5px; background: linear-gradient(90deg, var(--amber) 0%, rgba(212,144,32,0) 70%); margin-top: 4px; position: relative; z-index: 2; }
+.hdr-sub { font-family: var(--font-mono); font-size: 0.56rem; color: var(--dust); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 5px; }
+.hdr-coord { font-family: var(--font-mono); font-size: 0.5rem; line-height: 1.6; color: var(--dust); letter-spacing: 0.06em; opacity: 0.65; text-align: right; flex-shrink: 0; }
+
+/* ── Step Nav ── */
+#step-nav { display: flex; align-items: flex-start; justify-content: center; padding: 11px 20px 9px; border-bottom: 1px solid rgba(30,48,24,0.7); flex-shrink: 0; }
+.step-node { display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.3; transition: opacity 0.35s; min-width: 68px; }
+.step-node.active { opacity: 1; }
+.step-node.done   { opacity: 0.65; }
+.node-diamond-wrap { width: 28px; height: 28px; position: relative; display: flex; align-items: center; justify-content: center; }
+.node-diamond { width: 20px; height: 20px; background: var(--earth-card); border: 1.5px solid var(--earth-border); transform: rotate(45deg); position: absolute; transition: background 0.3s, border-color 0.3s, box-shadow 0.3s; }
+.step-node.active .node-diamond { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 14px var(--amber-glow); }
+.step-node.done   .node-diamond { background: var(--sage-dim); border-color: var(--sage); }
+.node-num { position: relative; z-index: 2; font-family: var(--font-mono); font-size: 0.58rem; font-weight: 600; color: var(--dust); transition: color 0.3s; line-height: 1; }
+.step-node.active .node-num { color: var(--earth); }
+.step-node.done   .node-num { color: var(--sage); font-size: 0.68rem; }
+.node-label { font-family: var(--font-mono); font-size: 0.48rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dust); text-align: center; line-height: 1.2; }
+.step-node.active .node-label { color: var(--amber); }
+.step-node.done   .node-label { color: var(--sage); }
+.step-track { flex: 1; max-width: 56px; height: 1.5px; background: repeating-linear-gradient(90deg, var(--earth-border) 0, var(--earth-border) 4px, transparent 4px, transparent 9px); margin-bottom: 16px; flex-shrink: 0; transition: background 0.4s; }
+.step-track.done { background: var(--sage); }
+
+/* ── Step Panels ── */
+.step-panel { display: none; flex-direction: column; }
+.step-panel.active { display: flex; }
+
+/* ── Instruction bar ── */
+.instr-bar { padding: 8px 18px 7px; border-bottom: 1px solid rgba(30,48,24,0.55); flex-shrink: 0; }
+.instr-rule { font-family: var(--font-mono); font-size: 0.56rem; color: var(--amber); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 2px; display: flex; align-items: center; gap: 5px; }
+.instr-rule::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--amber); transform: rotate(45deg); flex-shrink: 0; opacity: 0.8; }
+.instr-text { font-family: var(--font-disp); font-size: 0.9rem; font-weight: 400; color: var(--bone); letter-spacing: 0.02em; line-height: 1.3; }
+
+/* ── Step 1: scene ── */
+#scene-1 { position: relative; width: 100%; aspect-ratio: 560 / 270; overflow: hidden; }
+
+/* ── Spots ── */
+.spot { position: absolute; width: 44px; height: 44px; transform: translate(-50%,-50%); cursor: pointer; background: none; border: none; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 10; -webkit-tap-highlight-color: transparent; }
+.spot:focus { outline: none; }
+.spot:focus-visible .spot-badge { outline: 2px solid #fff; outline-offset: 5px; }
+.spot-badge { width: 32px; height: 32px; background: rgba(6,14,6,0.92); border: 2.5px solid #FFCC40; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: #FFCC40; box-shadow: 0 0 0 3px rgba(255,204,64,0.4), 0 0 18px rgba(255,204,64,0.55), 0 2px 8px rgba(0,0,0,0.9); position: relative; z-index: 2; transition: background 0.25s, border-color 0.25s, box-shadow 0.2s, transform 0.15s; user-select: none; }
+.spot:hover:not([disabled]) .spot-badge, .spot:focus-visible .spot-badge { transform: scale(1.14); }
+.spot-ring { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1.5px solid var(--amber); border-radius: 50%; animation: pulseRing 2.4s ease-out infinite; transform: translate(-50%,-50%); pointer-events: none; }
+.spot-ring-b { width: 36px; height: 36px; animation-delay: 1.2s; }
+@keyframes pulseRing { 0% { transform: translate(-50%,-50%) scale(0.6); opacity: 0.9; } 100% { transform: translate(-50%,-50%) scale(2.1); opacity: 0; } }
+.spot.wrong { pointer-events: none; }
+.spot.wrong .spot-badge { background: var(--terra); border-color: rgba(255,120,100,0.75); color: #fff; box-shadow: 0 0 0 3px rgba(196,67,42,0.3), 0 0 14px rgba(196,67,42,0.6); }
+.spot.wrong .spot-ring, .spot.wrong .spot-ring-b { display: none; }
+.spot.correct .spot-badge { background: var(--sage); border-color: rgba(120,210,120,0.9); color: #fff; box-shadow: 0 0 0 3px rgba(90,144,88,0.3), 0 0 14px rgba(90,144,88,0.65); }
+.spot.correct .spot-ring, .spot.correct .spot-ring-b { display: none; }
+
+/* Step 1 feedback — HIGH CONTRAST */
+#step1-feedback {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  width: 92%; max-width: 340px;
+  text-align: center; padding: 8px 16px;
+  border-radius: 2px;
+  font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.04em; line-height: 1.5;
+  border: 1.5px solid transparent;
+  pointer-events: none; z-index: 20;
+  transition: opacity 0.38s; opacity: 0;
+}
+#step1-feedback.error {
+  opacity: 1;
+  background: rgba(196,67,42,0.82);
+  border-color: #ff6b50;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+#step1-feedback.success {
+  opacity: 1;
+  background: rgba(90,144,88,0.82);
+  border-color: #7edd78;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* ── Step 2: dig zone ── */
+#dig-zone { position: relative; width: 100%; aspect-ratio: 560 / 210; overflow: hidden; cursor: crosshair; }
+#dig-zone:focus { outline: none; }
+#dig-zone:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+
+/* Hole */
+#hole-wrap { position: absolute; inset: 0; pointer-events: none; }
+#hole { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 52px; height: 0px; background: radial-gradient(ellipse at 50% 0%, #1c0e06 0%, #080402 100%); border-radius: 0 0 48% 48%; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.88), inset 0 5px 8px rgba(0,0,0,0.92); transition: height 0.32s cubic-bezier(0.16,1,0.3,1); z-index: 5; }
+#hole-top { position: absolute; left: 50%; top: -4px; transform: translateX(-50%); width: 58px; height: 10px; background: radial-gradient(ellipse at 50% 55%, #2e1a0a 0%, #130a04 100%); border-radius: 50%; z-index: 6; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.65); }
+
+/* SVG Trowel */
+#trowel {
+  position: absolute;
+  left: calc(50% - 39px); top: 0;
+  width: 32px;
+  pointer-events: none; z-index: 10;
+  transform-origin: 50% 8px;
+  transform: rotate(-22deg);
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
+  transition: transform 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Hardpan toast */
+#hardpan-toast {
+  position: absolute;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(212,144,32,0.92);
+  border: 1px solid var(--amber-light);
+  color: var(--earth);
+  font-family: var(--font-mono);
+  font-size: 0.56rem; font-weight: 600;
+  letter-spacing: 0.05em; line-height: 1.5;
+  padding: 5px 14px;
+  border-radius: 2px;
+  width: 88%; max-width: 340px;
+  text-align: center;
+  z-index: 20; pointer-events: none;
+  opacity: 0; transition: opacity 0.35s;
+}
+#hardpan-toast.visible { opacity: 1; }
+
+/* Depth ruler */
+#depth-ruler { position: absolute; right: 10px; top: 6px; bottom: 6px; width: 30px; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ruler-track { flex: 1; width: 5px; background: rgba(9,14,8,0.9); border-radius: 2px; position: relative; overflow: hidden; border: 1px solid var(--earth-border); }
+#ruler-fill { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: var(--terra); transition: height 0.32s cubic-bezier(0.16,1,0.3,1), background 0.3s; border-radius: 1px; }
+.ruler-label { font-family: var(--font-mono); font-size: 0.44rem; color: var(--dust); text-align: center; letter-spacing: 0.04em; line-height: 1.4; }
+
+/* Particles */
+#particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 7; }
+.particle { position: absolute; border-radius: 50%; pointer-events: none; animation: flyOut var(--dur,0.45s) ease-out forwards; }
+@keyframes flyOut { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx),var(--ty)) scale(0.12); opacity: 0; } }
+
+/* Depth readout */
+#depth-readout { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 6px 18px; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; color: var(--dust); border-top: 1px solid rgba(30,48,24,0.55); background: rgba(9,14,8,0.6); flex-shrink: 0; }
+.readout-block { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.readout-val { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 600; color: var(--amber); line-height: 1; letter-spacing: 0.02em; }
+.readout-label { font-size: 0.44rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dust); }
+.readout-divider { width: 1px; height: 28px; background: var(--earth-border); }
+#depth-status { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.06em; transition: color 0.3s; text-align: center; }
+
+/* Action bar */
+.action-bar { display: flex; align-items: center; gap: 12px; padding: 8px 16px 10px; border-top: 1px solid rgba(30,48,24,0.55); flex-shrink: 0; }
+.action-feedback { flex: 1; font-family: var(--font-mono); font-size: 0.56rem; line-height: 1.5; letter-spacing: 0.03em; transition: color 0.3s; }
+.action-feedback.hint  { color: var(--dust); }
+.action-feedback.error { color: #ff9980; font-weight: 600; }
+.action-feedback.ok    { color: #a0d8a0; }
+
+/* ── Step 3: QUIZ ── */
+#scene-3 { padding: 12px 16px 8px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+#quiz-prog { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.quiz-prog-label { font-family: var(--font-mono); font-size: 0.52rem; color: var(--amber); letter-spacing: 0.18em; text-transform: uppercase; }
+.quiz-dots { display: flex; gap: 7px; }
+.quiz-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--earth-border); transition: background 0.3s; }
+.quiz-dot.current { background: var(--amber); box-shadow: 0 0 8px var(--amber-glow); }
+.quiz-dot.done    { background: var(--sage); }
+
+#quiz-card { background: rgba(20,31,18,0.55); border: 1px solid var(--earth-border); border-radius: 3px; padding: 14px 14px 12px; }
+#q-text { font-family: var(--font-disp); font-size: 1.05rem; font-weight: 700; color: var(--bone); margin-bottom: 13px; line-height: 1.25; letter-spacing: 0.01em; }
+#quiz-choices { display: flex; flex-direction: column; gap: 6px; }
+
+.quiz-ans {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 12px;
+  background: var(--earth-mid); border: 1px solid var(--earth-border);
+  border-radius: 2px; cursor: pointer; text-align: left;
+  font-family: var(--font-disp); font-size: 0.88rem; font-weight: 400;
+  color: var(--bone); letter-spacing: 0.01em; line-height: 1.35;
+  width: 100%;
+  transition: background 0.18s, border-color 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.quiz-ans:hover:not(:disabled) { background: rgba(30,48,24,0.85); border-color: rgba(110,126,98,0.5); }
+.quiz-ans:disabled { cursor: default; }
+.quiz-ans-letter { font-family: var(--font-mono); font-size: 0.56rem; font-weight: 600; color: var(--dust); min-width: 14px; margin-top: 2px; flex-shrink: 0; transition: color 0.18s; }
+.quiz-ans.correct { background: rgba(90,144,88,0.18); border-color: var(--sage); }
+.quiz-ans.correct .quiz-ans-letter { color: var(--sage); }
+.quiz-ans.wrong   { background: rgba(196,67,42,0.15); border-color: var(--terra); opacity: 0.5; }
+.quiz-ans.wrong   .quiz-ans-letter { color: var(--terra); }
+
+#quiz-feedback {
+  display: none;
+  font-family: var(--font-mono); font-size: 0.58rem; line-height: 1.55;
+  padding: 8px 12px; border-radius: 2px; border: 1px solid transparent;
+  letter-spacing: 0.03em;
+}
+#quiz-feedback.correct { display: block; background: rgba(90,144,88,0.82); border-color: #7edd78; color: #fff; font-weight: 500; }
+#quiz-feedback.wrong   { display: block; background: rgba(196,67,42,0.82); border-color: #ff6b50; color: #fff; font-weight: 500; }
+
+.step3-action { padding: 8px 16px 14px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
+/* ── Buttons ── */
+.btn-primary { background: var(--amber); color: var(--earth); border: none; padding: 9px 20px; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: background 0.2s, box-shadow 0.2s, transform 0.1s; white-space: nowrap; flex-shrink: 0; }
+.btn-primary:hover:not(:disabled) { background: var(--amber-light); box-shadow: 0 0 20px var(--amber-glow); }
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled { background: rgba(110,126,98,0.18); color: rgba(110,126,98,0.38); cursor: not-allowed; }
+.btn-primary:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+.btn-primary.full { width: 100%; }
+.shake { animation: shake 0.4s ease; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 80% { transform: translateX(-4px); } }
+
+/* ── Complete overlay ── */
+#complete-overlay { position: fixed; inset: 0; background: rgba(4,7,4,1); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; padding: 24px; }
+#complete-overlay.active { opacity: 1; pointer-events: all; }
+.stamp-wrap { position: relative; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.stamp-ring-outer { position: absolute; inset: 0; border: 2px solid var(--amber); border-radius: 50%; opacity: 0.9; }
+.stamp-ring-inner { position: absolute; inset: 12px; border: 1px solid rgba(212,144,32,0.35); border-radius: 50%; }
+.stamp-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stamp-center { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 2; gap: 2px; }
+.stamp-check { font-size: 1.8rem; color: var(--amber); line-height: 1; }
+.stamp-cleared { font-family: var(--font-disp); font-size: 1.2rem; font-weight: 800; color: var(--amber); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1; }
+#complete-sub { font-family: var(--font-mono); font-size: 0.62rem; color: var(--dust); text-align: center; letter-spacing: 0.07em; line-height: 1.65; margin-bottom: 16px; max-width: 260px; }
+.complete-rule { width: 40px; height: 1px; background: var(--amber); margin: 0 auto 14px; opacity: 0.4; }
+
+/* ── Military badge ── */
+.fun-award {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-bottom: 18px;
+}
+.badge-svg { width: 164px; height: 152px; }
+.fun-award-title { font-family: var(--font-disp); font-size: 1.2rem; font-weight: 800; color: #c8a870; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; line-height: 1.2; }
+.fun-award-sub { font-family: var(--font-mono); font-size: 0.8rem; color: #8ab4a0; letter-spacing: 0.04em; text-align: center; margin-top: 3px; line-height: 1.65; }
+
+#complete-reset { background: none; border: 1px solid rgba(212,144,32,0.38); color: var(--amber); padding: 8px 28px; border-radius: 2px; font-family: var(--font-mono); font-size: 0.58rem; font-weight: 600; cursor: pointer; letter-spacing: 0.14em; text-transform: uppercase; transition: background 0.2s, border-color 0.2s; }
+#complete-reset:hover { background: var(--amber-dim); border-color: var(--amber); }
+#complete-reset:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .spot-ring, .spot-ring-b { animation: none !important; }
+  .particle { animation: none !important; display: none; }
+  #hole, #ruler-fill, #trowel { transition: none !important; }
+  #complete-overlay { transition: none !important; }
+}
+
+@media (max-width: 480px) {
+  header h1 { font-size: 1.6rem; }
+  .hdr-coord { display: none; }
+  .step-track { max-width: 36px; }
+  .node-label { font-size: 0.7rem; }
+  .btn-primary { font-size: 0.82rem; padding: 10px 14px; }
+  .instr-text { font-size: 1.05rem; }
+}
+
+/* ── Accessibility: readable type for Rise embed ── */
+.hdr-eyebrow     { font-size: 0.8rem; }
+.hdr-sub         { font-size: 0.82rem; }
+.hdr-coord       { font-size: 0.68rem; }
+.node-num        { font-size: 0.72rem; }
+.node-label      { font-size: 0.7rem; }
+.instr-rule      { font-size: 0.82rem; }
+.instr-text      { font-size: 1.15rem; line-height: 1.35; }
+#step1-feedback  { font-size: 0.9rem; }
+#hardpan-toast   { font-size: 0.88rem; }
+.ruler-label     { font-size: 0.68rem; }
+.readout-val     { font-size: 1.3rem; }
+.readout-label   { font-size: 0.7rem; }
+#depth-status    { font-size: 0.92rem; }
+.action-feedback { font-size: 0.92rem; }
+.btn-primary     { font-size: 0.92rem; padding: 11px 24px; }
+.btn-primary.full { padding: 13px 24px; }
+.quiz-prog-label { font-size: 0.82rem; }
+#q-text          { font-size: 1.2rem; }
+.quiz-ans        { font-size: 1.05rem; padding: 11px 14px; }
+.quiz-ans-letter { font-size: 0.82rem; }
+#quiz-feedback   { font-size: 0.92rem; }
+#complete-sub    { font-size: 0.94rem; max-width: 320px; }
+#complete-reset  { font-size: 0.88rem; padding: 11px 34px; }
+
+/* ── Horizontal depth bar ── */
+#depth-ruler { display: none !important; }
+#depth-hbar-row {
+  padding: 10px 16px 4px;
+  border-top: 1px solid rgba(30,48,24,0.55);
+  background: rgba(9,14,8,0.5);
+  flex-shrink: 0;
+}
+#depth-hbar-track {
+  position: relative;
+  height: 10px;
+  background: rgba(9,14,8,0.85);
+  border: 1px solid var(--earth-border);
+  border-radius: 5px;
+  overflow: visible;
+}
+#depth-hbar-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: var(--terra);
+  border-radius: 5px;
+  transition: width 0.32s cubic-bezier(0.16,1,0.3,1), background 0.3s;
+}
+.hbar-tick {
+  position: absolute;
+  top: -4px; bottom: -4px;
+  width: 2px; border-radius: 1px;
+}
+#hbar-tick-min { left: 54.55%; background: var(--amber); opacity: 0.95; }
+#hbar-tick-max { left: 72.73%; background: var(--amber); opacity: 0.6; }
+.hbar-axis {
+  position: relative;
+  height: 22px;
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--dust);
+  letter-spacing: 0.06em;
+}
+.hbar-ax-start { position: absolute; left: 0; }
+.hbar-ax-end   { position: absolute; right: 0; }
+.hbar-ax-min   { position: absolute; left: 54.55%; transform: translateX(-50%); color: var(--amber); font-weight: 600; }
+.hbar-ax-max   { position: absolute; left: 72.73%; transform: translateX(-50%); color: var(--amber); opacity: 0.7; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header role="banner">
+    <div class="hdr-bg-num" aria-hidden="true">3</div>
+    <div class="hdr-inner">
+      <div class="hdr-left">
+        <div class="hdr-eyebrow">AZT &middot; LNT-03 &middot; VVWW Module</div>
+        <h1>CATHOLE<span>DRILL</span></h1>
+        <div class="hdr-rule"></div>
+        <p class="hdr-sub">Dispose of Waste Properly &middot; Practice Module</p>
+      </div>
+      <div class="hdr-right" aria-hidden="true">
+        <div class="hdr-coord">N 31&deg;54&prime;<br>W 110&deg;27&prime;<br>AZT SEG 8</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Step nav ── -->
+  <nav id="step-nav" aria-label="Drill steps">
+    <div class="step-node active" id="pip-1" aria-label="Step 1: Choose site">
+      <div class="node-diamond-wrap"><div class="node-diamond"></div><span class="node-num">1</span></div>
+      <span class="node-label">Choose<br>Site</span>
+    </div>
+    <div class="step-track" id="track-1" aria-hidden="true"></div>
+    <div class="step-node" id="pip-2" aria-label="Step 2: Dig">
+      <div class="node-diamond-wrap"><div class="node-diamond"></div><span class="node-num">2</span></div>
+      <span class="node-label">Dig</span>
+    </div>
+    <div class="step-track" id="track-2" aria-hidden="true"></div>
+    <div class="step-node" id="pip-3" aria-label="Step 3: Cover and leave">
+      <div class="node-diamond-wrap"><div class="node-diamond"></div><span class="node-num">3</span></div>
+      <span class="node-label">Cover<br>&amp; Leave</span>
+    </div>
+  </nav>
+
+
+  <!-- ══════════ STEP 1 ══════════ -->
+  <div id="step-1" class="step-panel active" role="region" aria-label="Step 1: Choose a cathole site">
+    <div class="instr-bar">
+      <div class="instr-rule">200 ft from water &middot; trail &middot; camp</div>
+      <div class="instr-text">Tap where you would dig your cathole.</div>
+    </div>
+
+    <div id="scene-1" aria-label="Topographic map. Tab to spots A–D, press Enter to select.">
+
+      <!-- ╔═══════════════════════════════════════════════════╗
+           ║  TOPO MAP — Enhanced with hillshading +           ║
+           ║  contour lines showing elevation features         ║
+           ╚═══════════════════════════════════════════════════╝ -->
+      <svg viewBox="0 0 560 270" preserveAspectRatio="xMidYMid meet"
+           style="position:absolute;inset:0;width:100%;height:100%;display:block;"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <defs>
+          <!-- Hypsometric tint: lighter at high elevation (upper-right mesa), darker at low -->
+          <radialGradient id="gElev" cx="82%" cy="18%" r="72%">
+            <stop offset="0%"   stop-color="#e2cc60"/>
+            <stop offset="35%"  stop-color="#c8a840"/>
+            <stop offset="70%"  stop-color="#a88428"/>
+            <stop offset="100%" stop-color="#8c6818"/>
+          </radialGradient>
+          <!-- Hillshading: NW illumination, SE shadow -->
+          <linearGradient id="gHShade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="#f4e88a" stop-opacity="0.14"/>
+            <stop offset="45%"  stop-color="#c8a840" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#281600" stop-opacity="0.32"/>
+          </linearGradient>
+          <!-- Mesa SE shadow -->
+          <radialGradient id="gMesaSE" cx="68%" cy="72%" r="65%">
+            <stop offset="0%"  stop-color="#2a1400" stop-opacity="0.55"/>
+            <stop offset="55%" stop-color="#2a1400" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#2a1400" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Rock outcrop SE shadow -->
+          <radialGradient id="gRockSE" cx="65%" cy="70%" r="60%">
+            <stop offset="0%"  stop-color="#1a0c00" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#1a0c00" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Ground texture -->
+          <pattern id="pGrv" patternUnits="userSpaceOnUse" width="14" height="14">
+            <rect width="14" height="14" fill="#b09030" opacity="0.2"/>
+            <circle cx="4"  cy="5"  r="1.6" fill="#8a6818" opacity="0.32"/>
+            <circle cx="10" cy="10" r="1.0" fill="#c09838" opacity="0.22"/>
+            <circle cx="11" cy="2"  r="0.8" fill="#907020" opacity="0.18"/>
+          </pattern>
+          <filter id="fBlur2"><feGaussianBlur stdDeviation="2.5"/></filter>
+          <filter id="fBlur1"><feGaussianBlur stdDeviation="1.2"/></filter>
+        </defs>
+
+        <!-- ── Layer 1: Hypsometric base ── -->
+        <rect width="560" height="270" fill="url(#gElev)"/>
+
+        <!-- ── Layer 2: Hillshading ── -->
+        <rect width="560" height="270" fill="url(#gHShade)"/>
+
+        <!-- ── Layer 3: Ground texture ── -->
+        <rect width="560" height="270" fill="url(#pGrv)" opacity="0.6"/>
+
+        <!-- ══════════════════════════════════
+             MESA CONTOUR LINES (Camp area)
+             Each ring = 40 ft elevation
+             ══════════════════════════════════ -->
+        <!-- Outermost ring ~3080 ft -->
+        <ellipse cx="452" cy="54" rx="94" ry="64" fill="none" stroke="#7a5818" stroke-width="0.7" opacity="0.45"/>
+        <!-- 3120 ft -->
+        <ellipse cx="452" cy="54" rx="76" ry="52" fill="none" stroke="#7a5818" stroke-width="0.7" opacity="0.5"/>
+        <!-- 3160 ft -->
+        <ellipse cx="452" cy="54" rx="58" ry="40" fill="none" stroke="#7a5818" stroke-width="0.8" opacity="0.55"/>
+        <!-- 3200 ft — INDEX CONTOUR (thicker) -->
+        <ellipse cx="452" cy="54" rx="42" ry="28" fill="none" stroke="#7a5818" stroke-width="1.4" opacity="0.65"/>
+        <!-- 3240 ft -->
+        <ellipse cx="452" cy="54" rx="28" ry="18" fill="none" stroke="#7a5818" stroke-width="0.8" opacity="0.6"/>
+        <!-- 3280 ft — INDEX CONTOUR -->
+        <ellipse cx="452" cy="54" rx="16" ry="10" fill="none" stroke="#7a5818" stroke-width="1.2" opacity="0.7"/>
+        <!-- Summit plateau highlight -->
+        <ellipse cx="450" cy="52" rx="10" ry="6" fill="#e8d870" opacity="0.28"/>
+        <!-- Mesa hillshading (SE darker) -->
+        <ellipse cx="452" cy="54" rx="94" ry="64" fill="url(#gMesaSE)" opacity="0.9"/>
+
+        <!-- Elevation label on index contour -->
+        <text x="496" y="33" fill="#7a5818" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.6" transform="rotate(-12,496,33)">3200</text>
+        <text x="508" y="50" fill="#7a5818" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.55">3160</text>
+
+        <!-- ══════════════════════════════════
+             ROCK OUTCROP CONTOUR LINES
+             Lower-right area — secondary high point
+             ══════════════════════════════════ -->
+        <ellipse cx="322" cy="212" rx="48" ry="28" fill="none" stroke="#7a5818" stroke-width="0.6" opacity="0.42"/>
+        <ellipse cx="322" cy="212" rx="32" ry="18" fill="none" stroke="#7a5818" stroke-width="0.8" opacity="0.5"/>
+        <!-- INDEX -->
+        <ellipse cx="322" cy="212" rx="18" ry="10" fill="none" stroke="#7a5818" stroke-width="1.2" opacity="0.6"/>
+        <ellipse cx="322" cy="212" rx="8"  ry="5"  fill="none" stroke="#7a5818" stroke-width="0.7" opacity="0.55"/>
+        <ellipse cx="322" cy="212" rx="48" ry="28" fill="url(#gRockSE)" opacity="0.8"/>
+
+        <!-- ══════════════════════════════════
+             LOW-AREA / VALLEY — wash drainage
+             Darker fill near water = low elev
+             ══════════════════════════════════ -->
+        <!-- Valley shadow behind wash -->
+        <path d="M 0,40 Q 45,95 32,145 Q 18,192 46,238 Q 62,258 50,270 L 0,270 Z"
+              fill="#5a3808" opacity="0.3" filter="url(#fBlur2)"/>
+
+        <!-- ══════════════════════════════════
+             WATER — ARIZONAWASH
+             ══════════════════════════════════ -->
+        <path d="M 0,32 Q 34,74 24,118 Q 13,162 40,208 Q 58,240 44,270 L 0,270 Z"
+              fill="#2a5880" opacity="0.82"/>
+        <path d="M 0,36 Q 30,76 22,120 Q 11,164 36,210 Q 56,239 42,270"
+              stroke="#5aacd4" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <line x1="10" y1="92"  x2="22" y2="90"  stroke="#90d0f8" stroke-width="1"   opacity="0.4"  stroke-linecap="round"/>
+        <line x1="8"  y1="145" x2="20" y2="143" stroke="#90d0f8" stroke-width="0.8" opacity="0.32" stroke-linecap="round"/>
+        <line x1="14" y1="185" x2="28" y2="183" stroke="#90d0f8" stroke-width="0.8" opacity="0.28" stroke-linecap="round"/>
+        <text x="15" y="138" fill="#80c8f0" font-size="6.5"
+              font-family="IBM Plex Mono,monospace" font-weight="500" opacity="0.8"
+              text-anchor="middle" transform="rotate(-88,15,138)">WASH</text>
+
+        <!-- 200 ft danger zone — water -->
+        <path d="M 98,0 Q 114,38 120,86 Q 124,136 104,184 Q 90,224 94,270 L 60,270 Q 58,224 74,184 Q 92,136 88,86 Q 82,38 80,0 Z"
+              fill="rgba(196,67,42,0.07)" stroke="#C4432A" stroke-width="0.9" stroke-dasharray="5,6" opacity="0.52"/>
+        <text x="108" y="18" fill="#C4432A" font-size="6.5"
+              font-family="IBM Plex Mono,monospace" opacity="0.6">&lt;200 ft</text>
+
+        <!-- ══════════════════════════════════
+             TRAIL — follows ridgeline
+             ══════════════════════════════════ -->
+        <!-- Trail path -->
+        <path d="M 74,270 Q 196,228 280,166 Q 348,116 450,60"
+              stroke="#c89830" stroke-width="17" fill="none" opacity="0.38" stroke-linecap="round"/>
+        <path d="M 74,270 Q 196,228 280,166 Q 348,116 450,60"
+              stroke="#dca840" stroke-width="11" fill="none" opacity="0.9" stroke-linecap="round"/>
+        <path d="M 74,270 Q 196,228 280,166 Q 348,116 450,60"
+              stroke="#f5e090" stroke-width="2" fill="none"
+              stroke-dasharray="12,22" opacity="0.36" stroke-linecap="round"/>
+        <text x="318" y="132" fill="#d4a030" font-size="7"
+              font-family="IBM Plex Mono,monospace" font-weight="500" opacity="0.78"
+              transform="rotate(-34,318,132)">AZT TRAIL</text>
+        <!-- Trail danger band -->
+        <path d="M 52,270 Q 174,228 258,164 Q 326,114 426,58 L 476,64 Q 376,118 314,170 Q 230,230 98,268 Z"
+              fill="rgba(196,67,42,0.055)" stroke="none"/>
+
+        <!-- ══════════════════════════════════
+             CAMP — on mesa summit
+             ══════════════════════════════════ -->
+        <g transform="translate(456,52)">
+          <polygon points="-20,16 0,-14 20,16" fill="#1e2c14" opacity="0.94"/>
+          <polygon points="-15,16 0,-9  15,16" fill="#2c4018" opacity="0.8"/>
+          <rect x="-6" y="4" width="12" height="12" fill="#141c0c" opacity="0.92"/>
+          <line x1="-8" y1="16" x2="0" y2="-11" stroke="#4a5c30" stroke-width="0.8" opacity="0.35"/>
+        </g>
+        <text x="456" y="79" text-anchor="middle" fill="#8aaa48" font-size="7"
+              font-family="IBM Plex Mono,monospace" font-weight="500" opacity="0.9">CAMP</text>
+        <!-- Camp 200 ft zone -->
+        <circle cx="456" cy="52" r="54" fill="rgba(196,67,42,0.055)"
+                stroke="#C4432A" stroke-width="0.9" stroke-dasharray="5,6" opacity="0.45"/>
+        <text x="512" y="42" fill="#C4432A" font-size="6.5"
+              font-family="IBM Plex Mono,monospace" opacity="0.52">&lt;200 ft</text>
+
+        <!-- ══════════════════════════════════
+             VEGETATION
+             ══════════════════════════════════ -->
+        <g fill="#3c6828" opacity="0.68">
+          <ellipse cx="208" cy="50" rx="9" ry="6"/>
+          <ellipse cx="220" cy="45" rx="7" ry="4.5"/>
+          <ellipse cx="390" cy="220" rx="10" ry="6.5"/>
+          <ellipse cx="403" cy="214" rx="7" ry="4.5"/>
+          <ellipse cx="497" cy="178" rx="8" ry="5"/>
+          <ellipse cx="168" cy="112" rx="6" ry="4"/>
+          <ellipse cx="176" cy="108" rx="5" ry="3.2"/>
+        </g>
+        <!-- Prickly pear cluster -->
+        <g fill="#385820" opacity="0.75">
+          <ellipse cx="356" cy="238" rx="11" ry="7.5" transform="rotate(-15,356,238)"/>
+          <ellipse cx="368" cy="232" rx="9"  ry="6.5" transform="rotate(12,368,232)"/>
+          <ellipse cx="350" cy="228" rx="8"  ry="5.5" transform="rotate(-6,350,228)"/>
+        </g>
+        <!-- Rock outcrop (with contour lines above) -->
+        <ellipse cx="322" cy="212" rx="20" ry="11" fill="#7a6038" opacity="0.62"/>
+        <ellipse cx="338" cy="206" rx="14" ry="9"  fill="#907848" opacity="0.56"/>
+        <ellipse cx="310" cy="207" rx="10" ry="7"  fill="#685820" opacity="0.52"/>
+        <!-- Saguaro distant -->
+        <g transform="translate(492,148)" opacity="0.52">
+          <rect x="-5" y="-26" width="10" height="42" rx="4" fill="#2c5030"/>
+          <rect x="-24" y="-14" width="12" height="6" rx="3" fill="#2c5030"/>
+          <rect x="-29" y="-22" width="6" height="16" rx="3" fill="#385c38"/>
+        </g>
+
+        <!-- ══════════════════════════════════
+             COMPASS ROSE
+             ══════════════════════════════════ -->
+        <g transform="translate(86, 40)">
+          <circle cx="0" cy="0" r="14" fill="rgba(9,14,8,0.72)" stroke="#7a5818" stroke-width="0.8"/>
+          <!-- N needle (amber) -->
+          <polygon points="0,-11 -3,-2 0,-5 3,-2" fill="#D49020"/>
+          <!-- S needle (dark) -->
+          <polygon points="0,11 -3,2 0,5 3,2" fill="#4a3818"/>
+          <circle cx="0" cy="0" r="2" fill="#D49020"/>
+          <text x="0" y="-14" text-anchor="middle" fill="#D49020" font-size="6.5"
+                font-family="IBM Plex Mono,monospace" font-weight="600">N</text>
+        </g>
+
+        <!-- ── Scale bar ── -->
+        <rect x="80" y="255" width="60" height="3" fill="rgba(9,14,8,0.7)"/>
+        <rect x="80" y="255" width="30" height="3" fill="#D49020" opacity="0.7"/>
+        <text x="80" y="252" fill="#7a5818" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.65">0</text>
+        <text x="107" y="252" fill="#7a5818" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.65">200 ft</text>
+
+        <!-- ── Legend ── -->
+        <rect x="384" y="244" width="170" height="24" rx="1" fill="rgba(9,14,8,0.82)"/>
+        <rect x="390" y="250" width="7" height="7" rx="1" fill="#C4432A" opacity="0.7"/>
+        <text x="401" y="257" fill="#6E7E62" font-size="6" font-family="IBM Plex Mono,monospace">200 ft exclusion zone</text>
+        <line x1="390" y1="262" x2="400" y2="262" stroke="#dca840" stroke-width="2"/>
+        <text x="403" y="265" fill="#6E7E62" font-size="6" font-family="IBM Plex Mono,monospace">Trail corridor</text>
+
+        <!-- Map label -->
+        <text x="80" y="13" fill="#6E7E62" font-size="6.5"
+              font-family="IBM Plex Mono,monospace" opacity="0.5" letter-spacing="0.1em">TOPOGRAPHIC VIEW — TOP DOWN</text>
+      </svg>
+
+      <!-- Spot buttons -->
+      <button class="spot" id="spot-A" aria-label="Location A — tap to select" style="left:10%;top:70%;">
+        <span class="spot-badge" aria-hidden="true">A</span>
+        <span class="spot-ring" aria-hidden="true"></span>
+        <span class="spot-ring spot-ring-b" aria-hidden="true"></span>
+      </button>
+      <button class="spot" id="spot-B" aria-label="Location B — tap to select" style="left:47%;top:52%;">
+        <span class="spot-badge" aria-hidden="true">B</span>
+        <span class="spot-ring" aria-hidden="true"></span>
+        <span class="spot-ring spot-ring-b" aria-hidden="true"></span>
+      </button>
+      <button class="spot" id="spot-C" aria-label="Location C — tap to select" style="left:75%;top:38%;">
+        <span class="spot-badge" aria-hidden="true">C</span>
+        <span class="spot-ring" aria-hidden="true"></span>
+        <span class="spot-ring spot-ring-b" aria-hidden="true"></span>
+      </button>
+      <button class="spot" id="spot-D" aria-label="Location D — tap to select" style="left:67%;top:78%;">
+        <span class="spot-badge" aria-hidden="true">D</span>
+        <span class="spot-ring" aria-hidden="true"></span>
+        <span class="spot-ring spot-ring-b" aria-hidden="true"></span>
+      </button>
+
+      <div id="step1-feedback" role="alert" aria-live="assertive"></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ STEP 2 ══════════ -->
+  <div id="step-2" class="step-panel" role="region" aria-label="Step 2: Dig the cathole">
+    <div class="instr-bar">
+      <div class="instr-rule">6&ndash;8 inches deep &middot; 4&ndash;6 inches wide</div>
+      <div class="instr-text">Click the soil to dig. Hit target depth before calling it done.</div>
+    </div>
+
+    <div id="dig-zone" role="button" tabindex="0" aria-label="Click or press Enter to dig.">
+
+      <!-- Cross-section SVG -->
+      <svg viewBox="0 0 560 210" preserveAspectRatio="xMidYMid meet"
+           style="position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="gDuff" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#281608"/><stop offset="100%" stop-color="#342014"/>
+          </linearGradient>
+          <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#3e2610"/><stop offset="100%" stop-color="#5a3818"/>
+          </linearGradient>
+          <linearGradient id="gSub" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#724a28"/><stop offset="100%" stop-color="#8a5e32"/>
+          </linearGradient>
+          <linearGradient id="gClay" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#9c7038"/><stop offset="100%" stop-color="#b08842"/>
+          </linearGradient>
+          <pattern id="pTex" patternUnits="userSpaceOnUse" width="10" height="10">
+            <circle cx="3"   cy="3"   r="1"   fill="rgba(0,0,0,0.14)"/>
+            <circle cx="7.5" cy="7.5" r="0.7" fill="rgba(0,0,0,0.1)"/>
+          </pattern>
+        </defs>
+        <rect x="0" y="0"   width="560" height="16"  fill="url(#gDuff)"/>
+        <rect x="0" y="0"   width="560" height="16"  fill="url(#pTex)" opacity="0.5"/>
+        <rect x="0" y="16"  width="560" height="72"  fill="url(#gTop)"/>
+        <rect x="0" y="16"  width="560" height="72"  fill="url(#pTex)" opacity="0.38"/>
+        <rect x="0" y="88"  width="560" height="70"  fill="url(#gSub)"/>
+        <rect x="0" y="88"  width="560" height="70"  fill="url(#pTex)" opacity="0.28"/>
+        <rect x="0" y="158" width="560" height="52"  fill="url(#gClay)"/>
+        <!-- Hardpan rocks (more prominent) -->
+        <ellipse cx="180" cy="173" rx="22" ry="9"  fill="#7a5828" opacity="0.6"/>
+        <ellipse cx="360" cy="180" rx="18" ry="8"  fill="#8a6838" opacity="0.55"/>
+        <ellipse cx="490" cy="168" rx="14" ry="7"  fill="#907040" opacity="0.5"/>
+        <ellipse cx="100" cy="170" rx="16" ry="7"  fill="#6a4820" opacity="0.55"/>
+        <!-- Layer dividers -->
+        <line x1="78" y1="16"  x2="500" y2="16"  stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,7"/>
+        <line x1="78" y1="88"  x2="500" y2="88"  stroke="rgba(255,255,255,0.055)" stroke-width="1" stroke-dasharray="4,7"/>
+        <line x1="78" y1="158" x2="500" y2="158" stroke="rgba(255,255,255,0.045)" stroke-width="1" stroke-dasharray="4,7"/>
+        <!-- Left label panel -->
+        <rect x="0" y="0" width="76" height="210" fill="rgba(9,14,8,0.78)"/>
+        <text x="6" y="12"  fill="#7a5a30" font-size="6.5" font-family="IBM Plex Mono,monospace" font-weight="600">DUFF</text>
+        <text x="6" y="56"  fill="#6a4820" font-size="6.5" font-family="IBM Plex Mono,monospace" font-weight="600">TOPSOIL</text>
+        <text x="6" y="127" fill="#886030" font-size="6.5" font-family="IBM Plex Mono,monospace" font-weight="600">SUBSOIL</text>
+        <text x="6" y="182" fill="#a07840" font-size="6.5" font-family="IBM Plex Mono,monospace" font-weight="600">HARDPAN</text>
+        <!-- Embedded soil rocks -->
+        <ellipse cx="195" cy="108" rx="14" ry="9"   fill="#6a4c28" opacity="0.55"/>
+        <ellipse cx="345" cy="132" rx="10" ry="7"   fill="#7a5c38" opacity="0.5"/>
+        <ellipse cx="145" cy="66"  rx="8"  ry="5.5" fill="#382010" opacity="0.48"/>
+        <ellipse cx="435" cy="80"  rx="11" ry="7.5" fill="#483018" opacity="0.42"/>
+        <!-- Root traces -->
+        <path d="M 165,0 Q 170,28 162,52 Q 155,72 164,88"  stroke="#281408" stroke-width="0.8" fill="none" opacity="0.38"/>
+        <path d="M 375,0 Q 380,34 372,62 Q 366,80 378,88"  stroke="#281408" stroke-width="0.8" fill="none" opacity="0.32"/>
+        <!-- Dig hint arrow -->
+        <g id="dig-hint-svg" opacity="0.42">
+          <path d="M 280,2 L 280,14" stroke="#D49020" stroke-width="1.5" stroke-linecap="round"/>
+          <polygon points="276,14 280,22 284,14" fill="#D49020"/>
+          <text x="280" y="32" text-anchor="middle" fill="#D49020"
+                font-size="6" font-family="IBM Plex Mono,monospace" letter-spacing="0.1em">CLICK TO DIG</text>
+        </g>
+        <!-- Section label -->
+        <text x="79" y="10" fill="#6E7E62" font-size="6"
+              font-family="IBM Plex Mono,monospace" opacity="0.48" letter-spacing="0.12em">SECTION A–A&prime;</text>
+        <!-- Target depth lines -->
+        <line x1="504" y1="88"  x2="530" y2="88"  stroke="#D49020" stroke-width="1.5" opacity="0.78"/>
+        <text x="534" y="92"  fill="#D49020" font-size="7.5" font-family="IBM Plex Mono,monospace" opacity="0.85">6&#34;</text>
+        <text x="504" y="82"  fill="#D49020" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.62">MIN</text>
+        <line x1="504" y1="128" x2="530" y2="128" stroke="#D49020" stroke-width="1"
+              stroke-dasharray="3,4" opacity="0.48"/>
+        <text x="534" y="132" fill="#D49020" font-size="7.5" font-family="IBM Plex Mono,monospace" opacity="0.52">8&#34;</text>
+        <text x="504" y="122" fill="#D49020" font-size="5.5" font-family="IBM Plex Mono,monospace" opacity="0.45">MAX</text>
+      </svg>
+
+      <!-- Hole elements -->
+      <div id="hole-wrap" aria-hidden="true">
+        <div id="hole"></div>
+        <div id="hole-top"></div>
+      </div>
+
+      <!-- SVG Trowel — replaces emoji -->
+      <svg id="trowel" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 76" aria-hidden="true">
+        <!-- Drop shadow -->
+        <ellipse cx="17" cy="74" rx="6" ry="2" fill="rgba(0,0,0,0.45)"/>
+        <!-- Handle grip cap -->
+        <ellipse cx="17" cy="4" rx="5.5" ry="4" fill="#5a3010"/>
+        <!-- Handle shaft -->
+        <rect x="14" y="3" width="6" height="23" rx="3" fill="#8B5030"/>
+        <!-- Wood grain -->
+        <line x1="16" y1="5"  x2="16" y2="25" stroke="rgba(0,0,0,0.13)" stroke-width="0.6"/>
+        <line x1="18.5" y1="5" x2="18.5" y2="25" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>
+        <!-- Ferrule (metal collar) -->
+        <rect x="12.5" y="24" width="9" height="6" rx="1.5" fill="#A0A0A0"/>
+        <rect x="12.5" y="25" width="9" height="2" fill="rgba(255,255,255,0.28)"/>
+        <!-- Trowel blade -->
+        <path d="M 7,30 L 27,30 Q 29,30 29,34 L 23,62 Q 21,70 17,72 Q 13,70 11,62 L 5,34 Q 5,30 7,30 Z"
+              fill="#C8C8C8"/>
+        <!-- Blade left face (shadow) -->
+        <path d="M 7,30 L 13,30 L 11,58 Q 12,64 14,68 Q 13,68 11,62 L 5,34 Q 5,30 7,30 Z"
+              fill="rgba(0,0,0,0.1)"/>
+        <!-- Blade center ridge highlight -->
+        <path d="M 16,30 L 15,68 Q 17,72 19,68 L 18,30 Z" fill="rgba(255,255,255,0.16)"/>
+        <!-- Blade top highlight edge -->
+        <line x1="7" y1="31" x2="27" y2="31" stroke="rgba(255,255,255,0.55)" stroke-width="1"/>
+        <!-- Dirt accumulation on blade (shows after digging) -->
+        <path id="trowel-soil" d="M 10,52 Q 13,58 17,59 Q 21,58 24,52 L 22,49 Q 19,47 15,47 Z"
+              fill="#7a5828" opacity="0"/>
+      </svg>
+
+      <!-- Hardpan toast -->
+      <div id="hardpan-toast" aria-live="assertive"></div>
+
+
+      <!-- Dirt particles -->
+      <div id="particles" aria-hidden="true"></div>
+    </div>
+
+    <div id="depth-hbar-row" aria-hidden="true">
+      <div id="depth-hbar-track">
+        <div id="depth-hbar-fill"></div>
+        <div class="hbar-tick" id="hbar-tick-min"></div>
+        <div class="hbar-tick" id="hbar-tick-max"></div>
+      </div>
+      <div class="hbar-axis">
+        <span class="hbar-ax-start">0&Prime;</span>
+        <span class="hbar-ax-min">6&Prime; MIN</span>
+        <span class="hbar-ax-max">8&Prime; OPT</span>
+        <span class="hbar-ax-end">11&Prime;</span>
+      </div>
+    </div>
+
+    <div id="depth-readout" aria-live="polite" aria-atomic="true">
+      <div class="readout-block">
+        <div class="readout-val"><span id="depth-inches">0</span>&#8243;</div>
+        <div class="readout-label">Current Depth</div>
+      </div>
+      <div class="readout-divider"></div>
+      <div id="depth-status">Start digging</div>
+    </div>
+
+    <div class="action-bar">
+      <div id="step2-feedback" class="action-feedback hint" aria-live="polite">
+        Click the soil above to dig.
+      </div>
+      <button class="btn-primary" id="btn-done-digging">Done</button>
+    </div>
+  </div>
+
+
+  <!-- ══════════ STEP 3 — QUIZ ══════════ -->
+  <div id="step-3" class="step-panel" role="region" aria-label="Step 3: Knowledge check">
+    <div class="instr-bar">
+      <div class="instr-rule">Knowledge check &mdash; cover procedure</div>
+      <div class="instr-text">Answer all 3 questions correctly to complete the drill.</div>
+    </div>
+
+    <div id="scene-3">
+      <!-- Progress -->
+      <div id="quiz-prog">
+        <div class="quiz-prog-label" id="q-counter">QUESTION 1 OF 3</div>
+        <div class="quiz-dots">
+          <div class="quiz-dot current" id="qdot-0"></div>
+          <div class="quiz-dot" id="qdot-1"></div>
+          <div class="quiz-dot" id="qdot-2"></div>
+        </div>
+      </div>
+
+      <!-- Question card -->
+      <div id="quiz-card">
+        <div id="q-text"></div>
+        <div id="quiz-choices"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div id="quiz-feedback" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div class="step3-action">
+      <button id="btn-next-q"  class="btn-primary full" style="display:none;">Next Question &rarr;</button>
+      <button id="btn-complete" class="btn-primary full" style="display:none;" disabled>Drill Complete</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+
+<!-- ── Complete overlay ── -->
+<div id="complete-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="complete-title" aria-hidden="true">
+
+  <div class="stamp-wrap" aria-hidden="true">
+    <div class="stamp-ring-outer"></div>
+    <div class="stamp-ring-inner"></div>
+    <svg class="stamp-svg" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <path id="topArc"    d="M 18,75 A 57,57 0 0,1 132,75"/>
+        <path id="bottomArc" d="M 20,80 A 57,57 0 0,0 130,80"/>
+      </defs>
+      <text font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#D49020" opacity="0.72" font-weight="500" letter-spacing="3.5">
+        <textPath href="#topArc" startOffset="8%">CATHOLE PROTOCOL · LNT-03</textPath>
+      </text>
+      <text font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#D49020" opacity="0.72" font-weight="500" letter-spacing="3.5">
+        <textPath href="#bottomArc" startOffset="9%">AZT TRAIL CREW · VVWW</textPath>
+      </text>
+    </svg>
+    <div class="stamp-center">
+      <div class="stamp-check" aria-hidden="true">&#10003;</div>
+      <div class="stamp-cleared" id="complete-title">CLEARED</div>
+    </div>
+  </div>
+
+  <div class="complete-rule"></div>
+
+  <!-- Military award badge -->
+  <div class="fun-award" aria-label="Field Certified Digger award">
+    <svg class="badge-svg" viewBox="0 0 180 165" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="mTop" d="M 46,118 A 44,44 0 0,1 134,118"/>
+        <path id="mBot" d="M 50,122 A 44,44 0 0,0 130,122"/>
+        <filter id="fShadow"><feDropShadow dx="1.5" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.5"/></filter>
+      </defs>
+
+      <!-- Mounting bar -->
+      <rect x="44" y="0" width="92" height="6" rx="2" fill="#c8a870"/>
+      <rect x="44" y="0" width="92" height="6" rx="2" fill="none" stroke="#8a7030" stroke-width="0.8"/>
+      <circle cx="54"  cy="3" r="2.2" fill="#9a8040"/>
+      <circle cx="54"  cy="3" r="1"   fill="#d4b878"/>
+      <circle cx="126" cy="3" r="2.2" fill="#9a8040"/>
+      <circle cx="126" cy="3" r="1"   fill="#d4b878"/>
+
+      <!-- Ribbon body — olive / blue / poop / blue / olive stripes -->
+      <rect x="48" y="6"  width="84" height="8" rx="0" fill="#4d5424"/>
+      <rect x="48" y="14" width="84" height="8" fill="#4a7898"/>
+      <rect x="48" y="22" width="84" height="8" fill="#7a4c1c"/>
+      <rect x="48" y="30" width="84" height="8" fill="#4a7898"/>
+      <rect x="48" y="38" width="84" height="8" rx="0" fill="#4d5424"/>
+      <!-- Ribbon sheen overlay -->
+      <rect x="48" y="6" width="42" height="40" fill="rgba(255,255,255,0.05)"/>
+      <!-- Ribbon border -->
+      <rect x="48" y="6" width="84" height="40" rx="1" fill="none" stroke="#9a8438" stroke-width="1.5"/>
+      <!-- Center pip on ribbon -->
+      <circle cx="90" cy="26" r="4.5" fill="#c8a870"/>
+      <circle cx="90" cy="26" r="2.5" fill="#2a3010"/>
+      <circle cx="90" cy="26" r="1"   fill="#c8a870"/>
+
+      <!-- Suspension clasp -->
+      <rect x="85" y="46" width="10" height="11" rx="5" fill="#b09050"/>
+      <rect x="85" y="46" width="10" height="11" rx="5" fill="none" stroke="#8a7030" stroke-width="0.9"/>
+
+      <!-- Medal drop shadow -->
+      <circle cx="92" cy="120" r="51" fill="rgba(0,0,0,0.4)"/>
+      <!-- Medal body -->
+      <circle cx="90" cy="118" r="51" fill="#1c2410"/>
+      <!-- Outer gold ring -->
+      <circle cx="90" cy="118" r="51" fill="none" stroke="#c8a870" stroke-width="3"/>
+      <!-- Bevel -->
+      <circle cx="90" cy="118" r="47.5" fill="none" stroke="#e0c080" stroke-width="0.8" opacity="0.4"/>
+      <!-- Inner ring -->
+      <circle cx="90" cy="118" r="43"   fill="none" stroke="#8a7030" stroke-width="0.8" opacity="0.35"/>
+      <!-- Blue equator band -->
+      <path d="M 41,118 A 49,49 0 0,0 139,118 A 49,49 0 0,0 41,118" fill="#1a3a54" opacity="0.65"/>
+
+      <!-- Arc text: top -->
+      <text fill="#c8a870" font-family="'IBM Plex Mono',monospace" font-size="8.5" font-weight="600" letter-spacing="2.2">
+        <textPath href="#mTop" startOffset="3%">FIELD CERTIFIED</textPath>
+      </text>
+      <!-- Arc text: bottom -->
+      <text fill="#c8a870" font-family="'IBM Plex Mono',monospace" font-size="9" font-weight="700" letter-spacing="4.5">
+        <textPath href="#mBot" startOffset="25%">DIGGER</textPath>
+      </text>
+
+      <!-- Command pips above poop -->
+      <circle cx="76"  cy="104" r="2.5" fill="#c8a870" opacity="0.85"/>
+      <circle cx="90"  cy="101" r="3"   fill="#c8a870"/>
+      <circle cx="104" cy="104" r="2.5" fill="#c8a870" opacity="0.85"/>
+
+      <!-- Central poop device -->
+      <text x="90" y="130" text-anchor="middle" font-size="28">&#128169;</text>
+    </svg>
+    <div class="fun-award-title">Field Certified Digger</div>
+    <div class="fun-award-sub">No. 2 Deployed &middot; Zero Trace Confirmed<br>TP packed out &middot; Hardpan located</div>
+  </div>
+
+  <p id="complete-sub">
+    6&#8243; deep &middot; 200 ft from water, trail &amp; camp<br>
+    Backfilled, disguised &mdash; zero trace left behind.
+  </p>
+
+  <button id="complete-reset">Run Again</button>
+</div>
+
+
+<script>
+(function () {
+'use strict';
+
+/* ── Config ── */
+var MIN_DEPTH  = 6;   // enables Done button
+var GOOD_MAX   = 8;   // optimal max — hitting hardpan beyond this
+var HARD_MAX   = 11;  // absolute cap on depth counter
+
+/* ── Quiz data ── */
+var QUIZ = [
+  {
+    text: 'When filling a cathole, what goes in FIRST?',
+    choices: [
+      'Surface duff \u2014 it looks most natural on top',
+      'Subsoil from the deepest part of the hole',
+      'Any loose soil \u2014 order doesn\'t matter much'
+    ],
+    correct: 1,
+    ok:   'Correct \u2014 subsoil goes in first, topsoil next, surface duff last. Mimics natural stratification and speeds decomposition.',
+    fail: 'Fill deepest to surface. Subsoil goes in first \u2014 then topsoil, then duff on top. Mirrors how the ground is naturally layered.'
+  },
+  {
+    text: 'After covering the cathole, the site should look\u2026',
+    choices: [
+      'Like a slight mound \u2014 it won\u2019t fully settle for days',
+      'Completely natural \u2014 no evidence of digging whatsoever',
+      'Slightly marked so other crew knows where not to step'
+    ],
+    correct: 1,
+    ok:   'Exactly right \u2014 zero evidence, full stop. Scatter any excess soil, replace all surface debris, make it indistinguishable.',
+    fail: 'Leave zero trace. Any visible sign of digging violates LNT and attracts wildlife to the site.'
+  },
+  {
+    text: 'Toilet paper used in the field should be\u2026',
+    choices: [
+      'Buried in the cathole \u2014 it decomposes within a few weeks',
+      'Burned in place to eliminate all traces',
+      'Packed out in a sealed waste bag'
+    ],
+    correct: 2,
+    ok:   'Correct \u2014 pack it out, no exceptions. In desert conditions TP persists for years. Burning creates serious fire risk on the AZT.',
+    fail: 'Always pack it out. Desert TP doesn\u2019t reliably decompose, and buried TP resurfaces. Carry a small sealed waste bag on every trip.'
+  }
+];
+
+/* ── State ── */
+var state   = { step: 1, depth: 0, locked1: false };
+var qState  = { idx: 0 };
+
+/* ── DOM refs ── */
+var pip1El      = document.getElementById('pip-1');
+var pip2El      = document.getElementById('pip-2');
+var pip3El      = document.getElementById('pip-3');
+var track1El    = document.getElementById('track-1');
+var track2El    = document.getElementById('track-2');
+var step1El     = document.getElementById('step-1');
+var step2El     = document.getElementById('step-2');
+var step3El     = document.getElementById('step-3');
+var fb1El       = document.getElementById('step1-feedback');
+var digZoneEl   = document.getElementById('dig-zone');
+var holeEl      = document.getElementById('hole');
+var holeTopEl   = document.getElementById('hole-top');
+var trowelEl    = document.getElementById('trowel');
+var hbarFillEl  = document.getElementById('depth-hbar-fill');
+var depthInchEl = document.getElementById('depth-inches');
+var depthStatEl = document.getElementById('depth-status');
+var step2FbEl   = document.getElementById('step2-feedback');
+var btnDone     = document.getElementById('btn-done-digging');
+var btnComplete = document.getElementById('btn-complete');
+var btnNextQ    = document.getElementById('btn-next-q');
+var completeEl  = document.getElementById('complete-overlay');
+var resetBtn    = document.getElementById('complete-reset');
+var particlesEl = document.getElementById('particles');
+var digHintSvg  = document.getElementById('dig-hint-svg');
+var hardpanEl   = document.getElementById('hardpan-toast');
+var trowelSoil  = document.getElementById('trowel-soil');
+
+/* ══════════════════════════════════════
+   STEP 1 — Choose site
+══════════════════════════════════════ */
+var SPOT_DATA = {
+  'A': { correct: false, reason: 'Too close to the wash \u2014 stay 200+ ft from any water source.' },
+  'B': { correct: false, reason: 'Never dig on or directly beside the trail corridor.' },
+  'C': { correct: false, reason: 'Too close to camp \u2014 200 ft minimum from where people sleep and cook.' },
+  'D': { correct: true,  reason: null }
+};
+
+var feedbackTimer = null;
+
+function handleSpotClick(id) {
+  if (state.locked1) return;
+  var data = SPOT_DATA[id];
+  var btn  = document.getElementById('spot-' + id);
+
+  if (data.correct) {
+    state.locked1 = true;
+    btn.classList.add('correct');
+    btn.querySelector('.spot-badge').textContent = '\u2713';
+    showFeedback1('Good call \u2014 well clear of water, trail, and camp.', 'success');
+    setTimeout(function () { advanceToStep(2); }, 1350);
+  } else {
+    btn.classList.add('wrong');
+    btn.querySelector('.spot-badge').textContent = '\u2715';
+    showFeedback1(data.reason, 'error');
+  }
+}
+
+function showFeedback1(msg, type) {
+  clearTimeout(feedbackTimer);
+  fb1El.textContent = msg;
+  fb1El.className   = type;
+  if (type === 'error') {
+    feedbackTimer = setTimeout(function () { fb1El.className = ''; }, 2800);
+  }
+}
+
+document.querySelectorAll('.spot').forEach(function (btn) {
+  var id = btn.id.replace('spot-', '');
+  btn.addEventListener('click', function (e) { e.stopPropagation(); handleSpotClick(id); });
+  btn.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSpotClick(id); }
+  });
+});
+
+/* ══════════════════════════════════════
+   STEP 2 — Dig
+══════════════════════════════════════ */
+var hardpanShown = false;
+
+function handleDig() {
+  if (state.depth >= HARD_MAX) return;
+  state.depth++;
+
+  /* ── Hole visual (capped at GOOD_MAX visually) ── */
+  var visualDepth = Math.min(state.depth, GOOD_MAX);
+  holeEl.style.height = (visualDepth * 16) + 'px';
+  if (state.depth >= 1) holeTopEl.style.display = 'block';
+
+  /* ── Horizontal depth bar (0–11" full range) ── */
+  var pct = Math.min(state.depth / HARD_MAX * 100, 100);
+  hbarFillEl.style.width = pct + '%';
+  hbarFillEl.style.background =
+    state.depth < MIN_DEPTH  ? 'var(--terra)' :
+    state.depth <= GOOD_MAX  ? 'var(--sage)'  : 'var(--amber)';
+
+  /* ── Depth readout ── */
+  depthInchEl.textContent = state.depth;
+  if (state.depth < MIN_DEPTH) {
+    depthStatEl.textContent = 'Too shallow \u2014 keep going';
+    depthStatEl.style.color = 'var(--terra)';
+  } else if (state.depth <= GOOD_MAX) {
+    depthStatEl.textContent = 'Target depth \u2713';
+    depthStatEl.style.color = 'var(--sage)';
+  } else {
+    depthStatEl.textContent = 'Past optimal \u2014 hardpan';
+    depthStatEl.style.color = 'var(--amber)';
+  }
+
+  /* ── Hardpan notification ── */
+  if (state.depth === GOOD_MAX + 1) {
+    hardpanEl.textContent = '\u26a0\ufe0f You\u2019ve hit hardpan \u2014 deeper won\u2019t improve decomposition. 6\u20138\u2033 is the proven sweet spot.';
+    hardpanEl.classList.add('visible');
+    hardpanShown = true;
+  } else if (state.depth > GOOD_MAX + 1 && hardpanShown) {
+    hardpanEl.textContent = 'Still hardpan. You\u2019re doing extra work for zero benefit.';
+  }
+
+  /* ── Animations ── */
+  animateTrowel();
+  spawnParticles(state.depth > GOOD_MAX);
+
+  /* ── Trowel gets dirty ── */
+  if (trowelSoil && state.depth >= 2) {
+    trowelSoil.style.opacity = Math.min((state.depth - 1) * 0.2, 0.75);
+  }
+
+  if (digHintSvg) digHintSvg.style.display = 'none';
+
+  /* ── Action bar feedback ── */
+  if (state.depth > GOOD_MAX) {
+    step2FbEl.textContent = 'Past optimal depth \u2014 \u201cDone\u201d is ready whenever you are.';
+    step2FbEl.className   = 'action-feedback hint';
+  } else if (state.depth >= MIN_DEPTH) {
+    step2FbEl.textContent = 'Good depth \u2014 tap \u201cDone\u201d when ready.';
+    step2FbEl.className   = 'action-feedback ok';
+  } else {
+    var rem = MIN_DEPTH - state.depth;
+    step2FbEl.textContent = rem + ' more inch' + (rem > 1 ? 'es' : '') + ' to minimum depth.';
+    step2FbEl.className   = 'action-feedback hint';
+  }
+}
+
+function animateTrowel() {
+  trowelEl.style.transition = 'none';
+  trowelEl.style.transform  = 'rotate(-5deg) translateY(12px)';
+  setTimeout(function () {
+    trowelEl.style.transition = 'transform 0.28s cubic-bezier(0.16,1,0.3,1)';
+    trowelEl.style.transform  = 'rotate(-22deg) translateY(0)';
+  }, 80);
+}
+
+function spawnParticles(isHardpan) {
+  var hRect = holeEl.getBoundingClientRect();
+  var pRect = particlesEl.getBoundingClientRect();
+  var cx    = (hRect.left - pRect.left) + hRect.width / 2;
+  var cy    = hRect.top - pRect.top;
+
+  /* soil = earthy brown; hardpan = tan/clay */
+  var soilClrs = ['#7a5828','#6a4818','#9a6828','#5a4010','#a87830'];
+  var rockClrs = ['#c8b090','#b8a080','#a89070','#d0c090','#c0b080','#988060'];
+  var clrs = isHardpan ? rockClrs : soilClrs;
+
+  for (var i = 0; i < (isHardpan ? 4 : 5); i++) {
+    var p    = document.createElement('div');
+    var sz   = (isHardpan ? 2 : 3) + Math.random() * 4;
+    var ang  = (Math.random() * 160 - 80) * (Math.PI / 180);
+    var dist = 15 + Math.random() * 30;
+    var tx   = Math.sin(ang) * dist;
+    var ty   = -(Math.abs(Math.cos(ang)) * dist + 5);
+    var dur  = 0.3 + Math.random() * 0.22;
+    p.className = 'particle';
+    p.style.cssText =
+      'width:' + sz + 'px;height:' + sz + 'px;' +
+      'left:' + (cx - sz / 2) + 'px;top:' + (cy - sz / 2) + 'px;' +
+      'background:' + clrs[Math.floor(Math.random() * clrs.length)] + ';' +
+      '--tx:' + tx.toFixed(1) + 'px;--ty:' + ty.toFixed(1) + 'px;--dur:' + dur + 's;' +
+      'animation:flyOut ' + dur + 's ease-out forwards;';
+    particlesEl.appendChild(p);
+    setTimeout(function (el) { if (el.parentNode) el.parentNode.removeChild(el); },
+               (dur + 0.1) * 1000, p);
+  }
+}
+
+function handleDoneDigging() {
+  if (state.depth < MIN_DEPTH) {
+    step2FbEl.textContent = 'Not deep enough \u2014 pathogens survive in shallow holes. Dig to 6\u2033 minimum.';
+    step2FbEl.className   = 'action-feedback error';
+    btnDone.classList.remove('shake');
+    void btnDone.offsetWidth;
+    btnDone.classList.add('shake');
+    setTimeout(function () { btnDone.classList.remove('shake'); }, 420);
+    return;
+  }
+  advanceToStep(3);
+}
+
+digZoneEl.addEventListener('click',   function ()  { handleDig(); });
+digZoneEl.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDig(); }
+});
+btnDone.addEventListener('click', function () { handleDoneDigging(); });
+
+/* ══════════════════════════════════════
+   STEP 3 — Quiz
+══════════════════════════════════════ */
+function renderQuestion(idx) {
+  var q = QUIZ[idx];
+  document.getElementById('q-counter').textContent = 'QUESTION ' + (idx + 1) + ' OF ' + QUIZ.length;
+
+  /* dots */
+  document.querySelectorAll('.quiz-dot').forEach(function (d, i) {
+    d.classList.remove('current', 'done');
+    if (i < idx)        d.classList.add('done');
+    else if (i === idx) d.classList.add('current');
+  });
+
+  document.getElementById('q-text').textContent = q.text;
+
+  var fb = document.getElementById('quiz-feedback');
+  fb.className = '';
+  fb.textContent = '';
+
+  btnNextQ.style.display  = 'none';
+  btnComplete.style.display = 'none';
+
+  var choicesEl = document.getElementById('quiz-choices');
+  choicesEl.innerHTML = '';
+  var letters = ['A', 'B', 'C'];
+  q.choices.forEach(function (choice, i) {
+    var btn = document.createElement('button');
+    btn.className = 'quiz-ans';
+    btn.innerHTML =
+      '<span class="quiz-ans-letter">' + letters[i] + '</span>' +
+      '<span>' + choice + '</span>';
+    btn.dataset.answerIdx = i;
+    btn.addEventListener('click', function () { handleAnswer(idx, i); });
+    choicesEl.appendChild(btn);
+  });
+}
+
+function handleAnswer(qIdx, aIdx) {
+  var q       = QUIZ[qIdx];
+  var buttons = document.querySelectorAll('.quiz-ans');
+  var fb      = document.getElementById('quiz-feedback');
+
+  if (aIdx === q.correct) {
+    /* Correct */
+    buttons[aIdx].classList.add('correct');
+    buttons.forEach(function (b) { b.disabled = true; });
+    fb.textContent = '\u2713 ' + q.ok;
+    fb.className   = 'correct';
+
+    if (qIdx < QUIZ.length - 1) {
+      btnNextQ.style.display = 'block';
+    } else {
+      btnComplete.style.display = 'block';
+      btnComplete.disabled = false;
+    }
+  } else {
+    /* Wrong — disable this choice, allow retry */
+    buttons[aIdx].classList.add('wrong');
+    buttons[aIdx].disabled = true;
+    fb.textContent = '\u2715 ' + q.fail;
+    fb.className   = 'wrong';
+  }
+}
+
+btnNextQ.addEventListener('click', function () {
+  qState.idx++;
+  renderQuestion(qState.idx);
+});
+
+btnComplete.addEventListener('click', function () { showComplete(); });
+
+/* ══════════════════════════════════════
+   Navigation
+══════════════════════════════════════ */
+function advanceToStep(n) {
+  var pips   = [null, pip1El, pip2El, pip3El];
+  var panels = [null, step1El, step2El, step3El];
+  var tracks = [null, track1El, track2El];
+
+  var prevPip = pips[state.step];
+  if (prevPip) {
+    prevPip.classList.remove('active');
+    prevPip.classList.add('done');
+    prevPip.querySelector('.node-num').textContent = '\u2713';
+  }
+  if (panels[state.step]) panels[state.step].classList.remove('active');
+  if (tracks[state.step]) tracks[state.step].classList.add('done');
+
+  state.step = n;
+
+  if (pips[n])   pips[n].classList.add('active');
+  if (panels[n]) panels[n].classList.add('active');
+
+  if (n === 2) { setTimeout(function () { digZoneEl.focus(); }, 80); }
+  if (n === 3) {
+    renderQuestion(0);
+    setTimeout(function () {
+      var first = document.querySelector('.quiz-ans');
+      if (first) first.focus();
+    }, 80);
+  }
+}
+
+/* ══════════════════════════════════════
+   Complete
+══════════════════════════════════════ */
+function showComplete() {
+  completeEl.classList.add('active');
+  completeEl.setAttribute('aria-hidden', 'false');
+  setTimeout(function () { resetBtn.focus(); }, 100);
+}
+
+/* ══════════════════════════════════════
+   Reset
+══════════════════════════════════════ */
+resetBtn.addEventListener('click', function () { resetDrill(); });
+
+function resetDrill() {
+  completeEl.classList.remove('active');
+  completeEl.setAttribute('aria-hidden', 'true');
+
+  state.step    = 1;
+  state.depth   = 0;
+  state.locked1 = false;
+  qState.idx    = 0;
+  hardpanShown  = false;
+
+  [step1El, step2El, step3El].forEach(function (p) { p.classList.remove('active'); });
+  step1El.classList.add('active');
+
+  [[pip1El,'1',true],[pip2El,'2',false],[pip3El,'3',false]].forEach(function (r) {
+    r[0].classList.remove('active','done');
+    r[0].querySelector('.node-num').textContent = r[1];
+    if (r[2]) r[0].classList.add('active');
+  });
+  [track1El, track2El].forEach(function (t) { t.classList.remove('done'); });
+
+  Object.keys(SPOT_DATA).forEach(function (id) {
+    var btn = document.getElementById('spot-' + id);
+    if (!btn) return;
+    btn.classList.remove('correct','wrong');
+    btn.querySelector('.spot-badge').textContent = id;
+  });
+  fb1El.className = '';
+  clearTimeout(feedbackTimer);
+
+  holeEl.style.height     = '0px';
+  holeTopEl.style.display = 'none';
+  rulerFillEl.style.height     = '0%';
+  rulerFillEl.style.background = 'var(--terra)';
+
+  trowelEl.style.transition = 'none';
+  trowelEl.style.transform  = 'rotate(-22deg)';
+  if (trowelSoil) trowelSoil.style.opacity = '0';
+  if (digHintSvg) digHintSvg.style.display = '';
+
+  hardpanEl.textContent = '';
+  hardpanEl.classList.remove('visible');
+
+  depthInchEl.textContent = '0';
+  depthStatEl.textContent = 'Start digging';
+  depthStatEl.style.color = 'var(--dust)';
+  step2FbEl.textContent   = 'Click the soil above to dig.';
+  step2FbEl.className     = 'action-feedback hint';
+  btnDone.disabled = true;
+
+  btnNextQ.style.display    = 'none';
+  btnComplete.style.display = 'none';
+  btnComplete.disabled      = true;
+}
+
+/* ── Init ── */
+renderQuestion(0);
+
+}());
+</script>
+</body>
+</html>
